@@ -1,7 +1,12 @@
 import { Link } from "react-router-dom";
 import styles from "./SelectLevelPage.module.css";
+import { useEffect, useState } from "react";
 
 export function SelectLevelPage() {
+  const [checkboxValue, setCheckboxValue] = useState(false);
+  useEffect(() => {
+    console.log(checkboxValue);
+  });
   return (
     <div className={styles.container}>
       <div className={styles.modal}>
@@ -25,7 +30,12 @@ export function SelectLevelPage() {
         </ul>
         <div className={styles.checkbox}>
           <label className={styles.switch}>
-            <input type="checkbox" />
+            <input
+              type="checkbox"
+              onClick={() => {
+                setCheckboxValue(!checkboxValue);
+              }}
+            />
             <span className={styles.slider}></span>
           </label>
           <p>До трёх ошибок</p>
