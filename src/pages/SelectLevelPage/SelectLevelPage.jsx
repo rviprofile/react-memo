@@ -23,6 +23,13 @@ export function SelectLevelPage() {
             </Link>
           </li>
         </ul>
+        <div className={styles.checkbox}>
+          <label className={styles.switch}>
+            <input type="checkbox" />
+            <span className={styles.slider}></span>
+          </label>
+          <p>До трёх ошибок</p>
+        </div>
       </div>
     </div>
   );
