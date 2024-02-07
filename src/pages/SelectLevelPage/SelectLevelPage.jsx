@@ -1,12 +1,15 @@
 import { Link } from "react-router-dom";
 import styles from "./SelectLevelPage.module.css";
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { store } from "../../store/store";
+import { easyModeOffCreator, easyModeOnCreator } from "../../store/actions/creators/creators";
 
 export function SelectLevelPage() {
-  const [checkboxValue, setCheckboxValue] = useState(false);
-  useEffect(() => {
-    console.log(checkboxValue);
-  });
+  const [checkboxValue, setCheckboxValue] = useState(true);
+  const toggleEasyMode = () => {
+    setCheckboxValue(!checkboxValue);
+    checkboxValue ? store.dispatch(easyModeOnCreator()) : store.dispatch(easyModeOffCreator());
+  };
   return (
     <div className={styles.container}>
       <div className={styles.modal}>
@@ -33,7 +36,7 @@ export function SelectLevelPage() {
             <input
               type="checkbox"
               onClick={() => {
-                setCheckboxValue(!checkboxValue);
+                toggleEasyMode();
               }}
             />
             <span className={styles.slider}></span>
