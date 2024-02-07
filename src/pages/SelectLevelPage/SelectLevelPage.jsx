@@ -41,7 +41,7 @@ export function SelectLevelPage() {
             />
             <span className={styles.slider}></span>
           </label>
-          <p>До трёх ошибок</p>
+          <p>Упрощенный режим</p>
         </div>
       </div>
     </div>

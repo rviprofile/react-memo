@@ -1,6 +1,6 @@
 import { EASY_MODE_ON, EASY_MODE_OFF } from "./../actions/types/types.js";
 
-const initialState = {};
+const initialState = { status: false };
 
 export default function easyModeReducer(state = initialState, action) {
   switch (action.type) {
