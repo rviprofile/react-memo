@@ -143,6 +143,13 @@ export function Cards({ pairsCount = 3, previewSeconds = 5 }) {
         } else {
           // Уменьшаем счетчик попыток
           setLifesCounter(lifesCounter - 1);
+          setCards(
+            nextCards.map(item =>
+              openCardsWithoutPair.includes(item)
+                ? { id: item.id, suit: item.suit, rank: item.rank, open: false }
+                : item,
+            ),
+          );
           setStatus(STATUS_IN_PROGRESS);
           return;
         }
