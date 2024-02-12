@@ -42,7 +42,7 @@ export function EndGameModal({ isWon, gameDurationSeconds, gameDurationMinutes, 
       <Link to="/">
         <Button onClick={() => postLeaderboard({ name, time })}>Начать сначала</Button>
       </Link>
-      <Link to="/leaderboard">
+      <Link to="/leaderboard" onClick={() => postLeaderboard({ name, time })}>
         <p className={styles.link}>Перейти к лидерборду</p>
       </Link>
     </div>
