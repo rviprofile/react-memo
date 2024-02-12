@@ -62,6 +62,9 @@ export function Cards({ pairsCount = 3, previewSeconds = 5 }) {
     minutes: 0,
   });
 
+  // Попал ли игрок в лидерборд
+  const [isLeader, setIsLeader] = useState(false);
+
   function finishGame(status = STATUS_LOST) {
     setGameEndDate(new Date());
     setStatus(status);
@@ -113,6 +116,9 @@ export function Cards({ pairsCount = 3, previewSeconds = 5 }) {
     // Победа - все карты на поле открыты
     if (isPlayerWon) {
       finishGame(STATUS_WON);
+      if (window.location.pathname === "/react-memo/game/9" && easyModeStatus === false) {
+        setIsLeader(!isLeader);
+      }
       return;
     }
 
@@ -257,6 +263,7 @@ export function Cards({ pairsCount = 3, previewSeconds = 5 }) {
         <div className={styles.modalContainer}>
           <EndGameModal
             isWon={status === STATUS_WON}
+            isLeader={isLeader}
             gameDurationSeconds={timer.seconds}
             gameDurationMinutes={timer.minutes}
             onClick={resetGame}
