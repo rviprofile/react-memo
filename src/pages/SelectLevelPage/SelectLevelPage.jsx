@@ -41,8 +41,11 @@ export function SelectLevelPage() {
             />
             <span className={styles.slider}></span>
           </label>
-          <p>Упрощенный режим</p>
+          <p>Легкий режим (3 жизни)</p>
         </div>
+        <Link to="/leaderboard">
+          <p className={styles.link}>Перейти к лидерборду</p>
+        </Link>
       </div>
     </div>
   );
