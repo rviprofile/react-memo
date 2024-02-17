@@ -73,21 +73,23 @@ export function Cards({ pairsCount = 3, previewSeconds = 5 }) {
   function powerAlohomora() {
     // Если способоность еще не использована
     if (alohomora > 0) {
-      console.log("alohomora");
       // Ищем все закрытые карты на поле
       const closedCards = cards.filter(card => card.open === false);
       // Находим случайную карты из закрытых
       const randomCard = closedCards[Math.floor(Math.random() * closedCards.length)];
       // Находим пару для случайной карты
       const twoRandomCards = closedCards.filter(card => card.suit === randomCard.suit && card.rank === randomCard.rank);
-      console.log(twoRandomCards);
-      // Открываем первую
-      openCard(twoRandomCards[0]);
-      // Ждем конца анимации и открываем вторую
-      setTimeout(() => {
-        openCard(twoRandomCards[1]);
-      }, 500);
-      console.log(closedCards);
+      // Меняем open у случайной пары карт
+      const newCards = cards.map(card => {
+        if (card.id === twoRandomCards[0].id) {
+          return { ...card, open: true };
+        }
+        if (card.id === twoRandomCards[1].id) {
+          return { ...card, open: true };
+        }
+        return card;
+      });
+      setCards(newCards);
       setAlohomora(alohomora - 1);
     }
   }
@@ -95,11 +97,12 @@ export function Cards({ pairsCount = 3, previewSeconds = 5 }) {
   // “Прозрение”. На 5 секунд показываются все карты. Таймер длительности игры на это время останавливается.
   function powerAwakening() {
     if (awakening > 0) {
+      // Исходный массив карт
       const Originalcards = cards;
       // Меняем массив, все карты теперь открыты
       const allCardsOpen = cards.map(card => (card.open === false ? { ...card, open: true } : card));
       setCards(allCardsOpen);
-      // Ждем 5 секунд и возвращаем как было
+      // Ждем 5 секунд и возвращаем исходный массив
       setTimeout(() => {
         setCards(Originalcards);
       }, 5000);
@@ -206,7 +209,6 @@ export function Cards({ pairsCount = 3, previewSeconds = 5 }) {
       finishGame(STATUS_LOST);
       return;
     }
-    console.log("игра продолжается");
     // ... игра продолжается
   };
 
