@@ -8,7 +8,7 @@ import { Link } from "react-router-dom";
 import postLeaderboard from "../API/postLeaderboard";
 import { useState } from "react";
 
-export function EndGameModal({ isWon, gameDurationSeconds, gameDurationMinutes, onClick, isLeader }) {
+export function EndGameModal({ isWon, gameDurationSeconds, gameDurationMinutes, onClick, isLeader, achievements }) {
   const title = isWon ? "Вы победили!" : "Вы проиграли!";
 
   const imgSrc = isWon ? celebrationImageUrl : deadImageUrl;
@@ -40,9 +40,9 @@ export function EndGameModal({ isWon, gameDurationSeconds, gameDurationMinutes, 
       </div>
 
       <Link to="/">
-        <Button onClick={() => postLeaderboard({ name, time })}>Начать сначала</Button>
+        <Button onClick={() => postLeaderboard({ name, time, achievements })}>Начать сначала</Button>
       </Link>
-      <Link to="/leaderboard" onClick={() => postLeaderboard({ name, time })}>
+      <Link to="/leaderboard" onClick={() => postLeaderboard({ name, time, achievements })}>
         <p className={styles.link}>Перейти к лидерборду</p>
       </Link>
     </div>

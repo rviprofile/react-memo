@@ -18,7 +18,7 @@ const STATUS_IN_PROGRESS = "STATUS_IN_PROGRESS";
 // Начало игры: игрок видит все карты в течении нескольких секунд
 const STATUS_PREVIEW = "STATUS_PREVIEW";
 
-function getTimerValue(startDate, endDate) {
+function getTimerValue(startDate, endDate, secondsOnPause) {
   if (!startDate && !endDate) {
     return {
       minutes: 0,
@@ -30,7 +30,7 @@ function getTimerValue(startDate, endDate) {
     endDate = new Date();
   }
 
-  const diffInSecconds = Math.floor((endDate.getTime() - startDate.getTime()) / 1000);
+  const diffInSecconds = Math.floor((endDate.getTime() - startDate.getTime()) / 1000) - secondsOnPause;
   const minutes = Math.floor(diffInSecconds / 60);
   const seconds = diffInSecconds % 60;
   return {
@@ -65,6 +65,17 @@ export function Cards({ pairsCount = 3, previewSeconds = 5 }) {
   // Запас суперспособностей
   const [awakening, setAwakening] = useState(1);
   const [alohomora, setAlohomora] = useState(1);
+  // Функция возвращает массив с достижениями для POST запроса в Лидерборд
+  const formatAchievements = () => {
+    const arr = [];
+    if (easyModeStatus === false) {
+      arr.push(1);
+    }
+    if (awakening === 1 && alohomora === 1) {
+      arr.push(2);
+    }
+    return arr;
+  };
 
   // Попал ли игрок в лидерборд
   const [isLeader, setIsLeader] = useState(false);
@@ -75,7 +86,7 @@ export function Cards({ pairsCount = 3, previewSeconds = 5 }) {
     if (alohomora > 0) {
       // Ищем все закрытые карты на поле
       const closedCards = cards.filter(card => card.open === false);
-      // Находим случайную карты из закрытых
+      // Находим случайную карту из закрытых
       const randomCard = closedCards[Math.floor(Math.random() * closedCards.length)];
       // Находим пару для случайной карты
       const twoRandomCards = closedCards.filter(card => card.suit === randomCard.suit && card.rank === randomCard.rank);
@@ -90,13 +101,18 @@ export function Cards({ pairsCount = 3, previewSeconds = 5 }) {
         return card;
       });
       setCards(newCards);
+      // Уменьшаем счетчик, способности больше нет
       setAlohomora(alohomora - 1);
     }
   }
+  // Cостояние паузы для таймера
+  const [isPaused, setIsPaused] = useState(false);
 
   // “Прозрение”. На 5 секунд показываются все карты. Таймер длительности игры на это время останавливается.
   function powerAwakening() {
     if (awakening > 0) {
+      // Меняем состояние паузы для таймера
+      setIsPaused(true);
       // Исходный массив карт
       const Originalcards = cards;
       // Меняем массив, все карты теперь открыты
@@ -105,6 +121,7 @@ export function Cards({ pairsCount = 3, previewSeconds = 5 }) {
       // Ждем 5 секунд и возвращаем исходный массив
       setTimeout(() => {
         setCards(Originalcards);
+        setIsPaused(false);
       }, 5000);
       // Уменьшаем счетчик, способности больше нет
       setAwakening(awakening - 1);
@@ -162,7 +179,7 @@ export function Cards({ pairsCount = 3, previewSeconds = 5 }) {
     // Победа - все карты на поле открыты
     if (isPlayerWon) {
       finishGame(STATUS_WON);
-      if (window.location.pathname === "/react-memo/game/9" && easyModeStatus === false) {
+      if (window.location.pathname === "/react-memo/game/9") {
         setIsLeader(!isLeader);
       }
       return;
@@ -242,13 +259,28 @@ export function Cards({ pairsCount = 3, previewSeconds = 5 }) {
 
   // Обновляем значение таймера в интервале
   useEffect(() => {
-    const intervalId = setInterval(() => {
-      setTimer(getTimerValue(gameStartDate, gameEndDate));
-    }, 300);
-    return () => {
-      clearInterval(intervalId);
-    };
-  }, [gameStartDate, gameEndDate]);
+    // Если таймер на паузе, ничего не делаем
+    if (isPaused) {
+      return;
+    } else {
+      // Если было использовано "Прозрение"
+      if (awakening === 0) {
+        const intervalId = setInterval(() => {
+          setTimer(getTimerValue(gameStartDate, gameEndDate, 5));
+        }, 300);
+        return () => {
+          clearInterval(intervalId);
+        };
+      } else {
+        const intervalId = setInterval(() => {
+          setTimer(getTimerValue(gameStartDate, gameEndDate, 0));
+        }, 300);
+        return () => {
+          clearInterval(intervalId);
+        };
+      }
+    }
+  }, [gameStartDate, gameEndDate, isPaused]);
 
   return (
     <div className={styles.container}>
@@ -332,6 +364,7 @@ export function Cards({ pairsCount = 3, previewSeconds = 5 }) {
             gameDurationSeconds={timer.seconds}
             gameDurationMinutes={timer.minutes}
             onClick={resetGame}
+            achievements={formatAchievements()}
           />
         </div>
       ) : null}
