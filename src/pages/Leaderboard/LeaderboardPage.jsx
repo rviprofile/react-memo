@@ -25,7 +25,7 @@ export function LeaderboardPage() {
         </Link>
       </header>
       <ul className={styles.list}>
-        <li className={styles.firstline} key="0">
+        <li className={styles.firstline} key={0}>
           <p>Позиция</p>
           <p>Пользователь</p>
           <p>Достижения</p>
