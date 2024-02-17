@@ -53,20 +53,60 @@ export function Cards({ pairsCount = 3, previewSeconds = 5 }) {
   const [cards, setCards] = useState([]);
   // Текущий статус игры
   const [status, setStatus] = useState(STATUS_PREVIEW);
-
   // Дата начала игры
   const [gameStartDate, setGameStartDate] = useState(null);
   // Дата конца игры
   const [gameEndDate, setGameEndDate] = useState(null);
-
   // Стейт для таймера, высчитывается в setInteval на основе gameStartDate и gameEndDate
   const [timer, setTimer] = useState({
     seconds: 0,
     minutes: 0,
   });
+  // Запас суперспособностей
+  const [awakening, setAwakening] = useState(1);
+  const [alohomora, setAlohomora] = useState(1);
 
   // Попал ли игрок в лидерборд
   const [isLeader, setIsLeader] = useState(false);
+
+  // “Алохомора”. Открывается случайная пара карт.
+  function powerAlohomora() {
+    // Если способоность еще не использована
+    if (alohomora > 0) {
+      console.log("alohomora");
+      // Ищем все закрытые карты на поле
+      const closedCards = cards.filter(card => card.open === false);
+      // Находим случайную карты из закрытых
+      const randomCard = closedCards[Math.floor(Math.random() * closedCards.length)];
+      // Находим пару для случайной карты
+      const twoRandomCards = closedCards.filter(card => card.suit === randomCard.suit && card.rank === randomCard.rank);
+      console.log(twoRandomCards);
+      // Открываем первую
+      openCard(twoRandomCards[0]);
+      // Ждем конца анимации и открываем вторую
+      setTimeout(() => {
+        openCard(twoRandomCards[1]);
+      }, 500);
+      console.log(closedCards);
+      setAlohomora(alohomora - 1);
+    }
+  }
+
+  // “Прозрение”. На 5 секунд показываются все карты. Таймер длительности игры на это время останавливается.
+  function powerAwakening() {
+    if (awakening > 0) {
+      const Originalcards = cards;
+      // Меняем массив, все карты теперь открыты
+      const allCardsOpen = cards.map(card => (card.open === false ? { ...card, open: true } : card));
+      setCards(allCardsOpen);
+      // Ждем 5 секунд и возвращаем как было
+      setTimeout(() => {
+        setCards(Originalcards);
+      }, 5000);
+      // Уменьшаем счетчик, способности больше нет
+      setAwakening(awakening - 1);
+    }
+  }
 
   function finishGame(status = STATUS_LOST) {
     setGameEndDate(new Date());
@@ -166,7 +206,7 @@ export function Cards({ pairsCount = 3, previewSeconds = 5 }) {
       finishGame(STATUS_LOST);
       return;
     }
-
+    console.log("игра продолжается");
     // ... игра продолжается
   };
 
@@ -255,21 +295,30 @@ export function Cards({ pairsCount = 3, previewSeconds = 5 }) {
         ) : (
           ""
         )}
+
         <div className={styles.powers_block}>
-          <div className={styles.power} onClick={() => console.log("Прозрение")}>
-            <img className={styles.power_img} src={eyeUrl} alt="eye" />
-            <span className={styles.power_description}>
-              <b>Прозрение</b>
-              <br></br>На 5 секунд показываются все карты
-            </span>
-          </div>
-          <div className={styles.power} onClick={() => console.log("Алохомора")}>
-            <img className={styles.power_img} src={cardsUrl} alt="cards" />
-            <span className={styles.power_description}>
-              <b>Алохомора</b>
-              <br></br>Открывается случайная пара карт
-            </span>
-          </div>
+          {awakening > 0 ? (
+            <div className={styles.power} onClick={() => powerAwakening()}>
+              <img className={styles.power_img} src={eyeUrl} alt="eye" />
+              <span className={styles.power_description}>
+                <b>Прозрение</b>
+                <br></br>На 5 секунд показываются все карты
+              </span>
+            </div>
+          ) : (
+            ""
+          )}
+          {alohomora > 0 ? (
+            <div className={styles.power} onClick={() => powerAlohomora()}>
+              <img className={styles.power_img} src={cardsUrl} alt="cards" />
+              <span className={styles.power_description}>
+                <b>Алохомора</b>
+                <br></br>Открывается случайная пара карт
+              </span>
+            </div>
+          ) : (
+            ""
+          )}
         </div>
       </div>
 
