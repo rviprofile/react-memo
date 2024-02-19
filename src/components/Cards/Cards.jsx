@@ -332,7 +332,14 @@ export function Cards({ pairsCount = 3, previewSeconds = 5 }) {
 
         <div className={styles.powers_block}>
           {awakening > 0 ? (
-            <div className={styles.power} onClick={() => powerAwakening()}>
+            <div
+              className={styles.power}
+              onClick={() => {
+                if (status !== STATUS_PREVIEW) {
+                  powerAwakening();
+                }
+              }}
+            >
               <img className={styles.power_img} src={eyeUrl} alt="eye" />
               <span className={styles.power_description}>
                 <b>Прозрение</b>
@@ -343,7 +350,14 @@ export function Cards({ pairsCount = 3, previewSeconds = 5 }) {
             ""
           )}
           {alohomora > 0 ? (
-            <div className={styles.power} onClick={() => powerAlohomora()}>
+            <div
+              className={styles.power}
+              onClick={() => {
+                if (status !== STATUS_PREVIEW) {
+                  powerAlohomora();
+                }
+              }}
+            >
               <img className={styles.power_img} src={cardsUrl} alt="cards" />
               <span className={styles.power_description}>
                 <b>Алохомора</b>
