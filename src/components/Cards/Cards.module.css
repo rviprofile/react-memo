@@ -82,3 +82,60 @@
   font-family: StratosSkyeng;
   font-size: 30px;
 }
+
+.power {
+  cursor: pointer;
+}
+
+.power_description {
+  font-family: StratosSkyeng;
+  visibility: hidden;
+  position: absolute;
+  z-index: 1;
+  width: auto;
+  color: #004980;
+  font-size: 18px;
+  background-color: #c2f5ff;
+  border-radius: 10px;
+  padding: 10px 15px 10px 15px;
+  text-align: center;
+  transform: translate(-20%, 110%);
+}
+
+.lifes_description {
+  font-family: StratosSkyeng;
+  visibility: hidden;
+  position: absolute;
+  z-index: 1;
+  width: auto;
+  color: #004980;
+  font-size: 18px;
+  background-color: #c2f5ff;
+  border-radius: 10px;
+  padding: 10px 15px 10px 15px;
+  text-align: center;
+  transform: translate(-20%, 110%);
+}
+
+.power:hover .power_description {
+  visibility: visible;
+}
+
+.lifes:hover .lifes_description {
+  visibility: visible;
+}
+
+.bottom_line {
+  margin-top: 30px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
+
+.powers_block {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}

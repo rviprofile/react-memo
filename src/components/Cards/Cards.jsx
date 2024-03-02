@@ -6,6 +6,9 @@ import { EndGameModal } from "../../components/EndGameModal/EndGameModal";
 import { Button } from "../../components/Button/Button";
 import { Card } from "../../components/Card/Card";
 import { store } from "../../store/store";
+import eyeUrl from "./images/Eye.svg";
+import cardsUrl from "./images/Cards.svg";
+import lifesUrl from "./images/Lifes.svg";
 
 // Игра закончилась
 const STATUS_LOST = "STATUS_LOST";
@@ -15,7 +18,7 @@ const STATUS_IN_PROGRESS = "STATUS_IN_PROGRESS";
 // Начало игры: игрок видит все карты в течении нескольких секунд
 const STATUS_PREVIEW = "STATUS_PREVIEW";
 
-function getTimerValue(startDate, endDate) {
+function getTimerValue(startDate, endDate, secondsOnPause) {
   if (!startDate && !endDate) {
     return {
       minutes: 0,
@@ -27,7 +30,7 @@ function getTimerValue(startDate, endDate) {
     endDate = new Date();
   }
 
-  const diffInSecconds = Math.floor((endDate.getTime() - startDate.getTime()) / 1000);
+  const diffInSecconds = Math.floor((endDate.getTime() - startDate.getTime()) / 1000) - secondsOnPause;
   const minutes = Math.floor(diffInSecconds / 60);
   const seconds = diffInSecconds % 60;
   return {
@@ -50,20 +53,80 @@ export function Cards({ pairsCount = 3, previewSeconds = 5 }) {
   const [cards, setCards] = useState([]);
   // Текущий статус игры
   const [status, setStatus] = useState(STATUS_PREVIEW);
-
   // Дата начала игры
   const [gameStartDate, setGameStartDate] = useState(null);
   // Дата конца игры
   const [gameEndDate, setGameEndDate] = useState(null);
-
   // Стейт для таймера, высчитывается в setInteval на основе gameStartDate и gameEndDate
   const [timer, setTimer] = useState({
     seconds: 0,
     minutes: 0,
   });
+  // Запас суперспособностей
+  const [awakening, setAwakening] = useState(1);
+  const [alohomora, setAlohomora] = useState(1);
+  // Функция возвращает массив с достижениями для POST запроса в Лидерборд
+  const formatAchievements = () => {
+    const arr = [];
+    if (easyModeStatus === false) {
+      arr.push(1);
+    }
+    if (awakening === 1 && alohomora === 1) {
+      arr.push(2);
+    }
+    return arr;
+  };
 
   // Попал ли игрок в лидерборд
   const [isLeader, setIsLeader] = useState(false);
+
+  // “Алохомора”. Открывается случайная пара карт.
+  function powerAlohomora() {
+    // Если способоность еще не использована
+    if (alohomora > 0) {
+      // Ищем все закрытые карты на поле
+      const closedCards = cards.filter(card => card.open === false);
+      // Находим случайную карту из закрытых
+      const randomCard = closedCards[Math.floor(Math.random() * closedCards.length)];
+      // Находим пару для случайной карты
+      const twoRandomCards = closedCards.filter(card => card.suit === randomCard.suit && card.rank === randomCard.rank);
+      // Меняем open у случайной пары карт
+      const newCards = cards.map(card => {
+        if (card.id === twoRandomCards[0].id) {
+          return { ...card, open: true };
+        }
+        if (card.id === twoRandomCards[1].id) {
+          return { ...card, open: true };
+        }
+        return card;
+      });
+      setCards(newCards);
+      // Уменьшаем счетчик, способности больше нет
+      setAlohomora(alohomora - 1);
+    }
+  }
+  // Cостояние паузы для таймера
+  const [isPaused, setIsPaused] = useState(false);
+
+  // “Прозрение”. На 5 секунд показываются все карты. Таймер длительности игры на это время останавливается.
+  function powerAwakening() {
+    if (awakening > 0) {
+      // Меняем состояние паузы для таймера
+      setIsPaused(true);
+      // Исходный массив карт
+      const Originalcards = cards;
+      // Меняем массив, все карты теперь открыты
+      const allCardsOpen = cards.map(card => (card.open === false ? { ...card, open: true } : card));
+      setCards(allCardsOpen);
+      // Ждем 5 секунд и возвращаем исходный массив
+      setTimeout(() => {
+        setCards(Originalcards);
+        setIsPaused(false);
+      }, 5000);
+      // Уменьшаем счетчик, способности больше нет
+      setAwakening(awakening - 1);
+    }
+  }
 
   function finishGame(status = STATUS_LOST) {
     setGameEndDate(new Date());
@@ -83,6 +146,8 @@ export function Cards({ pairsCount = 3, previewSeconds = 5 }) {
     setGameEndDate(null);
     setTimer(getTimerValue(null, null));
     setStatus(STATUS_PREVIEW);
+    setAlohomora(1);
+    setAwakening(1);
   }
 
   /**
@@ -116,7 +181,7 @@ export function Cards({ pairsCount = 3, previewSeconds = 5 }) {
     // Победа - все карты на поле открыты
     if (isPlayerWon) {
       finishGame(STATUS_WON);
-      if (window.location.pathname === "/react-memo/game/9" && easyModeStatus === false) {
+      if (window.location.pathname === "/react-memo/game/9") {
         setIsLeader(!isLeader);
       }
       return;
@@ -163,7 +228,6 @@ export function Cards({ pairsCount = 3, previewSeconds = 5 }) {
       finishGame(STATUS_LOST);
       return;
     }
-
     // ... игра продолжается
   };
 
@@ -197,13 +261,28 @@ export function Cards({ pairsCount = 3, previewSeconds = 5 }) {
 
   // Обновляем значение таймера в интервале
   useEffect(() => {
-    const intervalId = setInterval(() => {
-      setTimer(getTimerValue(gameStartDate, gameEndDate));
-    }, 300);
-    return () => {
-      clearInterval(intervalId);
-    };
-  }, [gameStartDate, gameEndDate]);
+    // Если таймер на паузе, ничего не делаем
+    if (isPaused) {
+      return;
+    } else {
+      // Если было использовано "Прозрение"
+      if (awakening === 0) {
+        const intervalId = setInterval(() => {
+          setTimer(getTimerValue(gameStartDate, gameEndDate, 5));
+        }, 300);
+        return () => {
+          clearInterval(intervalId);
+        };
+      } else {
+        const intervalId = setInterval(() => {
+          setTimer(getTimerValue(gameStartDate, gameEndDate, 0));
+        }, 300);
+        return () => {
+          clearInterval(intervalId);
+        };
+      }
+    }
+  }, [gameStartDate, gameEndDate, isPaused]);
 
   return (
     <div className={styles.container}>
@@ -228,22 +307,6 @@ export function Cards({ pairsCount = 3, previewSeconds = 5 }) {
             </>
           )}
         </div>
-        {easyModeStatus ? (
-          <div className={styles.lifes}>
-            <svg width="50px" height="80px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path
-                fillRule="evenodd"
-                clipRule="evenodd"
-                d="M5.62436 4.4241C3.96537 5.18243 2.75 6.98614 2.75 9.13701C2.75 11.3344 3.64922 13.0281 4.93829 14.4797C6.00072 15.676 7.28684 16.6675 8.54113 17.6345C8.83904 17.8642 9.13515 18.0925 9.42605 18.3218C9.95208 18.7365 10.4213 19.1004 10.8736 19.3647C11.3261 19.6292 11.6904 19.7499 12 19.7499C12.3096 19.7499 12.6739 19.6292 13.1264 19.3647C13.5787 19.1004 14.0479 18.7365 14.574 18.3218C14.8649 18.0925 15.161 17.8642 15.4589 17.6345C16.7132 16.6675 17.9993 15.676 19.0617 14.4797C20.3508 13.0281 21.25 11.3344 21.25 9.13701C21.25 6.98614 20.0346 5.18243 18.3756 4.4241C16.7639 3.68739 14.5983 3.88249 12.5404 6.02065C12.399 6.16754 12.2039 6.25054 12 6.25054C11.7961 6.25054 11.601 6.16754 11.4596 6.02065C9.40166 3.88249 7.23607 3.68739 5.62436 4.4241ZM12 4.45873C9.68795 2.39015 7.09896 2.10078 5.00076 3.05987C2.78471 4.07283 1.25 6.42494 1.25 9.13701C1.25 11.8025 2.3605 13.836 3.81672 15.4757C4.98287 16.7888 6.41022 17.8879 7.67083 18.8585C7.95659 19.0785 8.23378 19.292 8.49742 19.4998C9.00965 19.9036 9.55954 20.3342 10.1168 20.6598C10.6739 20.9853 11.3096 21.2499 12 21.2499C12.6904 21.2499 13.3261 20.9853 13.8832 20.6598C14.4405 20.3342 14.9903 19.9036 15.5026 19.4998C15.7662 19.292 16.0434 19.0785 16.3292 18.8585C17.5898 17.8879 19.0171 16.7888 20.1833 15.4757C21.6395 13.836 22.75 11.8025 22.75 9.13701C22.75 6.42494 21.2153 4.07283 18.9992 3.05987C16.901 2.10078 14.3121 2.39015 12 4.45873Z"
-                fill="#fff"
-              />
-            </svg>
-            <p className={styles.lifes_counter}>{lifesCounter}</p>
-          </div>
-        ) : (
-          ""
-        )}
-
         {status === STATUS_IN_PROGRESS ? <Button onClick={resetGame}>Начать заново</Button> : null}
       </div>
 
@@ -258,6 +321,56 @@ export function Cards({ pairsCount = 3, previewSeconds = 5 }) {
           />
         ))}
       </div>
+      <div className={styles.bottom_line}>
+        {easyModeStatus ? (
+          <div className={styles.lifes}>
+            <img src={lifesUrl} alt="lifes" />
+            <p className={styles.lifes_counter}>{lifesCounter}</p>
+            <span className={styles.lifes_description}>Запас попыток</span>
+          </div>
+        ) : (
+          ""
+        )}
+
+        <div className={styles.powers_block}>
+          {awakening > 0 ? (
+            <div
+              className={styles.power}
+              onClick={() => {
+                if (status !== STATUS_PREVIEW) {
+                  powerAwakening();
+                }
+              }}
+            >
+              <img className={styles.power_img} src={eyeUrl} alt="eye" />
+              <span className={styles.power_description}>
+                <b>Прозрение</b>
+                <br></br>На 5 секунд показываются все карты
+              </span>
+            </div>
+          ) : (
+            ""
+          )}
+          {alohomora > 0 ? (
+            <div
+              className={styles.power}
+              onClick={() => {
+                if (status !== STATUS_PREVIEW) {
+                  powerAlohomora();
+                }
+              }}
+            >
+              <img className={styles.power_img} src={cardsUrl} alt="cards" />
+              <span className={styles.power_description}>
+                <b>Алохомора</b>
+                <br></br>Открывается случайная пара карт
+              </span>
+            </div>
+          ) : (
+            ""
+          )}
+        </div>
+      </div>
 
       {isGameEnded ? (
         <div className={styles.modalContainer}>
@@ -267,6 +380,7 @@ export function Cards({ pairsCount = 3, previewSeconds = 5 }) {
             gameDurationSeconds={timer.seconds}
             gameDurationMinutes={timer.minutes}
             onClick={resetGame}
+            achievements={formatAchievements()}
           />
         </div>
       ) : null}
